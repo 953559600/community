@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>title</title>
+    <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="./css/discuss.css" />
+</head>
+<body >
+	<div id="wrap" class="flex-wrap flex-vertical" >
+        <header class="border-b" >
+            <b tapmode="hover" onclick="api.closeWin();" class="ic-back"></b>
+            <div class="title">
+            	<span id="themeName" class="themeName"></span>
+            	<span id="themeDate" class="themeDate"></span>
+            </div>
+        </header>
+        
+        <div id="list" class="container">
+			<div id="title" class="title2"></div>
+			<div id="content" class="content"></div>
+			<div class="lineParent">
+				<div class="line"></div>
+			</div>
+			
+			<div id="discuss" class="discuss">
+			
+			</div>
+			
+			<div id="discuss" style="height:100px; visibility: hidden;"></div>
+			
+			<div class="replyParent">
+				<textarea id="reply" class="reply" type="text" placeholder="写评论.."></textarea>
+				<span class="submit" onclick="submit();">评论</span>
+			</div>
+		</div>
+		
+		
+    </div>
+	
+</body>
+<script type="text/javascript" src="../../script/tools/jquery321min.js"></script>
+<script type="text/javascript" src="../../script/layer/layer.js"></script>
+<script type="text/javascript" src="../../script/tools/cloud.js"></script>
+<script type="text/javascript" src="../../script/api.js"></script>
+<script type="text/javascript">
+	
+	var model;
+	var themeId;
+	var discuss;
+	var globalReply;
+	var reply;
+	var id;
+	var type;
+	apiready = function(){
+		
+		themeId = api.pageParam.themeId;
+		model = cloud.getModel();
+		id = localStorage.getItem("communityId");
+		
+		discuss = document.getElementById("discuss");
+		reply = document.getElementById("reply");
+		
+		initTheme();
+		cloud.findByColumnPage("discuss", ["themeId",themeId], 1, 100000, initDiscuss);
+		
+		if(id){
+			cloud.getUserById(id, getUserType);
+		}
+	}; 
+	function getUserType(ret){
+		type = ret.type;
+	}
+	//初始化主题
+	function initTheme(){
+		model.findById({
+		    class: "theme",
+		    id: themeId
+		}, function(ret, err){
+			var titleDom = document.getElementById("title");
+			var contentDom = document.getElementById("content");
+			var dateDom = document.getElementById("themeDate");
+			
+			var title = ret.title;
+			var content = ret.content;
+			var userId = ret.userId;
+			var createdAt = ret.createdAt;
+			createdAt = new Date(createdAt);
+			createdAt = cloud.DateFormat(createdAt, "yyyy-MM-dd hh:mm:ss");
+			
+			titleDom.innerHTML = title;
+			contentDom.innerHTML = content;
+			dateDom.innerHTML = createdAt;
+			
+			cloud.getUserById(userId, initNameTheme);
+			
+		});
+	}
+	//初始化发表主题的人名字
+	function initNameTheme(ret){
+		var nameDom = document.getElementById("themeName");
+		var name = ret.name;
+		nameDom.innerHTML = name;
+	}
+	
+	//初始化评论
+	function initDiscuss(ret){
+		for(var i=0; i<ret.length; i++){
+			var dis = ret[i];
+			var discussId = dis.id;
+			var userId = dis.userId;
+			var discussContent = dis.content;
+			var createdAt = dis.createdAt;
+			createdAt = new Date(createdAt);
+			createdAt = cloud.DateFormat(createdAt, "yyyy-MM-dd hh:mm:ss");
+			
+			(function(userId, discussContent, createdAt, discussId){
+			
+				cloud.getUserById(userId, initDiscussName);
+				var disDom = document.createElement("div");
+				disDom.setAttribute("class", "discuss");
+				
+				discuss.appendChild(disDom);
+				function initDiscussName(ret){
+					cloud.getHeadPhoto(userId, successCallBack, errorCallBack);
+					
+					var name = ret.name;
+					function initDisscussPhoto(url){
+						var discussImg = document.createElement("img");
+						var discussName = document.createElement("span");
+						var discussDelete = document.createElement("span");
+						var discussContentDom = document.createElement("div");
+						var discussDate = document.createElement("span");
+						var discussReplyDom = document.createElement("div");
+						var lineParent2 = document.createElement("div");
+						
+						discussImg.src = url;
+						discussImg.setAttribute("class", "discussImg");
+						discussName.setAttribute("class", "discussName");
+						discussDelete.setAttribute("class", "discussDelete");
+						discussDelete.innerHTML = "删除";
+						discussName.innerHTML = name;
+						discussContentDom.setAttribute("class", "discussContent");
+						discussContentDom.innerHTML = discussContent;
+						discussDate.setAttribute("class", "discussDate");
+						discussDate.innerHTML = createdAt;
+						discussReplyDom.setAttribute("class", "discussReply");
+						discussReplyDom.innerHTML = "回复";
+						lineParent2.setAttribute("class", "lineParent2");
+						lineParent2.innerHTML = "<div class='line2'></div>";
+						
+						disDom.appendChild(discussImg);	
+						disDom.appendChild(discussName);	
+						if(type==9){
+							disDom.appendChild(discussDelete);	
+							discussDelete.ondblclick = function(){
+								model.deleteById({
+								    class: "discuss",
+								    id: discussId
+								}, function(ret, err){
+								    if(ret){
+								    	cloud.dirAlert("删除成功");
+								    	discuss.innerHTML = "";
+								    	cloud.findByColumnPage("discuss", ["themeId",themeId], 1, 100000, initDiscuss);
+								    }
+								});
+							}
+						}
+						disDom.appendChild(discussContentDom);	
+						disDom.appendChild(discussDate);	
+						disDom.appendChild(discussReplyDom);	
+						disDom.appendChild(lineParent2);	
+						
+						discussReplyDom.onclick = function(){
+							if(id==userId){
+								cloud.dirAlert("不能回复自己的评论");
+								return;
+							}
+							globalReply = name+" : "+discussContent;
+							reply.setAttribute("placeholder","回复//"+name);
+							reply.focus();
+							//阻止事件冒泡
+							window.event? window.event.cancelBubble = true : e.stopPropagation();
+						}
+					}
+					function errorCallBack(){
+						initDisscussPhoto("../../image/user/headPhoto.png");
+					}
+					
+					function successCallBack(url){
+						initDisscussPhoto(url);
+					}
+				}
+				
+				
+			})(userId, discussContent, createdAt, discussId);
+			
+		}
+		
+	}
+	
+	
+	//点击评论事件
+	function submit(){
+		var value = reply.value;
+		if(!id){
+			cloud.dirAlert("请先登录再进行评论");
+			return;
+		}
+		if(!value){
+			cloud.dirAlert("评论内容不能为空");
+			return;
+		}
+		if(globalReply){
+			value = value+" //@"+globalReply;
+		}
+		model.insert({
+		    class: "discuss",
+		    value: {
+		    	userId:id,
+		    	themeId:themeId,
+		    	content:value
+		    }
+		}, function(ret, err){
+			if(ret){
+				cloud.dirAlert("评论成功");
+				reply.value = "";
+			}
+			discuss.innerHTML = "";
+			cloud.findByColumnPage("discuss", ["themeId",themeId], 1, 100000, initDiscuss);
+			
+		});
+	
+	}
+	
+	window.onclick = function(){
+		globalReply = "";
+		reply.setAttribute("placeholder","写评论..");
+	}
+</script>
+</html>

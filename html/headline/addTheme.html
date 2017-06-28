@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>社区</title>
+    <link rel="stylesheet" type="text/css" href="../../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../../frame/bootstrap337dist/css/bootstrap.css"/>
+	
+    <style type="text/css">
+     	.container {
+            width:90%; 
+            height:90%;
+        }
+        .context{
+        	margin-top:5%;
+        	width:100%;
+        	border:1px solid #bbb;
+        	overflow:scroll;
+        }
+        .title{
+        	margin-top:5%;
+        }
+        .img{
+        	width:100%;
+        	background:#889BA0;
+        }
+        .submit{
+        	margin-top:5%;
+        	width:100%;
+        	background:#6AB494;
+        }
+    </style>
+    <script type="text/javascript" src="../../script/tools/jquery321min.js"></script>
+	<script type="text/javascript" src="../../script/layer/layer.js"></script>
+	<script type="text/javascript" src="../../script/tools/cloud.js"></script>
+    <script type="text/javascript">
+    
+    	var model;
+    	var context;
+    	var title;
+    	var id;
+    	apiready = function(){
+    		//获取当前页面的宽高
+    		var winW = document.documentElement.clientWidth || document.body.clientWidth;  
+			var winH =  document.documentElement.clientHeight || document.body.clientHeight; 
+			
+			title = document.getElementById("title");
+			context = document.getElementById("context");
+			
+			var user = api.require("user");
+			model =  cloud.getModel();
+			id = localStorage.getItem("communityId");
+			
+			//初始化面板
+			initContext(winH);
+			initImg(winH);
+			initSubmit(winH);
+    	}
+    	//初始化提交按钮
+    	function initSubmit(winH){
+    		var submit = document.getElementById("submit");
+			submit.style.height = winH*0.06+"px";
+			
+			submit.onclick = function(){
+				var titleValue = title.value;
+				var contextValue = context.innerHTML;
+				if(titleValue==""){
+					cloud.dirAlert("标题不能为空");
+					return;
+				}
+				if(titleValue.length>=15){
+					cloud.dirAlert("标题不能大于15个字符");
+					return;
+				}
+				if(contextValue==""){
+					cloud.dirAlert("内容不能为空");
+					return;
+				}
+				model.insert({
+				    class: "theme",
+				    value: {
+				    	userId:id,
+				    	title:titleValue,
+				    	content:contextValue,
+				    	status:1
+				    }
+				}, function(ret, err){
+					if(ret){
+						cloud.dirAlert("发布成功");
+						setTimeout(function(){
+						 	api.closeWin();
+						},2000);
+					}
+					
+					
+				});
+				
+			}
+    	}
+    	//初始化文本框
+    	function initContext(winH){
+    		context.style.height = winH/2+"px";
+    	}
+    	//初始化图片
+    	function initImg(winH){
+    		//初始化图片的高度
+    		var img = document.getElementById("img");
+			img.style.height = winH*0.06+"px";
+			
+			//绑定图片事件
+			img.onclick = function(){
+				cloud.openPicture(picture);
+			}
+    	}
+    	//选择图片
+    	function picture(ret){
+    		if(ret && ret.list){
+	    		var list = ret.list;
+	    		for(var i=0; i<list.length; i++){
+	    			var prc = list[i];
+	    			var suffix = prc.suffix;	//文件后缀
+	    			var path = prc.path;
+	    			UploadFile(path, suffix);
+	    		}
+    		}
+    		
+    		
+    	}
+    	//上传图片
+    	function UploadFile(path, suffix){
+    		model.uploadFile({
+			    report: false,
+			    data: {
+			        file: {
+			            name: new Date().getTime()+"."+suffix,
+			            url: path
+			        }
+			    }
+			}, function(ret, err){
+			    if( ret ){
+			    	var img = document.createElement("img");
+					img.src = ret.url;
+					context.appendChild(img);
+				}
+			});
+    	}
+    	
+    </script>
+</head>
+<body>
+	<div class="container">
+		<input id="title" type="text" class="form-control title" placeholder="请输入标题">
+		<div id="context" contentEditable="true" class="context"></div>
+		<button id="img" class="img">选择图片</button>
+		<button id="submit" class="submit">提交</button>
+	</div>
+</body>
+</html>

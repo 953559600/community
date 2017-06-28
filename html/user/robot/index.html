@@ -1,0 +1,295 @@
+<html lang="zh-cn" >
+<head>
+<meta charset="utf-8" />
+<meta HTTP-EQUIV="pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate">
+<meta HTTP-EQUIV="expires" CONTENT="0">
+<meta name="apple-touch-fullscreen" content="yes" />
+<meta name="format-detection" content="telephone=no" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no" media="screen" />
+<title>模拟对话框</title>
+<style type="text/css">
+	body{background:url(images/background-picture.jpg) no-repeat;background-size:100%;}
+	@media all and (min-width: 640px) {
+	    body,html,.wenwen-footer,.speak_window{width:640px!important;margin:0 auto}
+	    .speak_window,.wenwen-footer{left:50%!important;margin-left:-320px}
+	}
+	input,button{outline:none;}
+	.wenwen-footer{width:100%;position:fixed;bottom:-5px;left:0;background:#fff;padding:3%;border-top:solid 1px #ddd;box-sizing:border-box;}
+	.wenwen_btn,.wenwen_help{width:15%;text-align:center;}
+	.wenwen_btn img,.wenwen_help img{height:40px;}
+	.wenwen_text{height:40px;border-radius:5px;border:solid 1px #636162;box-sizing:border-box;width:66%;text-align:center;overflow:hidden;margin-left:2%;}
+	.circle-button{padding:0 5px;}
+	.wenwen_text .circle-button{font-size:14px;color:#666;line-height:38px;}
+	.write_box{background:#fff;width:100%;height:40px;line-height:40px;}
+	.write_box input{height:40px;padding:0 5px;line-height:40px;width:100%;box-sizing:border-box;border:0;}
+	.wenwen_help button{width:95%;background:#42929d;color:#fff;border-radius:5px;border:0;height:40px;}
+	#wenwen{height:100%;}
+	.speak_window{overflow-y:scroll;height:100%;width:100%;position:fixed;top:0;left:0;}
+	.speak_box{margin-bottom:70px;padding:10px;}
+	.question,.answer{margin-bottom:1rem;}
+	.question{text-align:right;}
+	.question>div{display:inline-block;}
+	.left{float:left;}
+	.right{float:right;}
+	.clear{clear:both;}
+	.heard_img{height:45px;width:45px;border-radius:50%;overflow:hidden;background:#ddd;margin-top:5px;}
+	.heard_img img{width:100%;height:100%}
+	.question_text,.answer_text{box-sizing:border-box;position:relative;display:table-cell;min-height:60px;}
+	.question_text{padding-right:20px;}
+	.answer_text{padding-left:20px;}
+	.question_text p,.answer_text p{border-radius:10px;padding:.5rem;margin:0;font-size:14px;line-height:28px;box-sizing:border-box;vertical-align:middle;display:table-cell;height:60px;word-wrap:break-word;}
+	.answer_text p{background:#fff;}
+	.question_text p{background:#42929d;color:#fff;text-align:left;}
+	.question_text i,.answer_text i{width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;position:absolute;top:25px;}
+	.answer_text i{border-right:10px solid #fff;left:10px;}
+	.question_text i{border-left:10px solid #42929d;right:10px;}
+	.answer_text p a{color:#42929d;display:inline-block;}
+	audio{display:none;}
+	.saying{position:fixed;bottom:30%;left:50%;width:120px;margin-left:-60px;display:none;}
+	.saying img{width:100%;}
+	.write_list{position:absolute;left:0;width:100%;background:#fff;border-top:solid 1px #ddd;padding:5px;line-height:30px;}
+</style>
+</head>
+<body>
+<div class="speak_window">
+	<div class="speak_box">
+		<div class="answer">
+			<div class="heard_img left"><img src="images/moeQuest.jpg"></div>
+			<div class="answer_text">
+				<p>Hey，您的专属机器人在此！您可以向我提问哦！有时服务器会跟我闹点小脾气，试试关闭当前页面重新进入就ok啦!</p>
+				<i></i>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="saying">
+	<img src="images/saying.gif"/>
+</div>
+<div class="wenwen-footer">
+	<div class="wenwen_btn left" onClick="to_write()"><img src="images/jp_btn.png"></div>
+	<div class="wenwen_text left">
+	    <div class="write_box">
+	        <input type="text" class="left"  placeholder="请输入关键字" />
+	    </div>   
+	    <div class="circle-button" id="wenwen">
+	      	  按住 说话
+	    </div>
+	</div>
+	<div class="wenwen_help right">
+	    <a href="#" style="display:none">
+	        <img src="images/help_btn.png">
+	    </a>
+	    <button onClick="up_say()" class="right">发送</button>
+	</div>
+	<div style="opacity:0;" class="clear"></div>
+</div>
+<script type="text/javascript" src="../../../script/tools/jquery321min.js"></script>
+<script type="text/javascript" src="../../../script/layer/layer.js"></script>
+<script type="text/javascript" src="../../../script/tools/cloud.js"></script>
+<script type="text/javascript">
+	var headPhoto = "../../../image/user/headPhoto.png";
+	var model;
+	var speechRecognizer;
+	var id ;
+	
+	apiready = function(){
+		speechRecognizer = api.require('speechRecognizer');
+		model = cloud.getModel();
+		var user = api.require("user");
+		id = localStorage.getItem("communityId");
+		
+		if( id ){	
+			//获得头像后执行的函数
+		 	cloud.getHeadPhoto(id, init_chatting_records, init_chatting_records);
+		}
+		
+		to_say();
+	}
+	
+	//初始化聊天记录
+	function init_chatting_records(url){
+		headPhoto = url || "../../../image/user/headPhoto.png";
+		var query = api.require("query");
+
+		query.createQuery(function(ret, err) {
+		    if (ret && ret.qid) {
+		        var queryId = ret.qid;
+		
+		        query.whereEqual({
+		            qid: queryId,
+		            column: "userId",
+		            value: id
+		        });
+				query.limit({
+		            qid:queryId,
+		            value:"40"
+		        });
+				query.desc({
+	                qid: queryId, 
+	                column: "createdAt"
+	            });
+		
+		        model.findAll({
+		            class: "chatting_records",
+		            qid: queryId
+		        }, function(ret, err){
+		        	for(var i=ret.length-1; i>=0; i--){
+		        		var obj = ret[i];
+		        		var ask = obj.ask;
+		        		var ans = obj.answer;
+		        		var askMsg  = '<div class="question">';
+	        			askMsg += '<div class="heard_img right"><img src="'+headPhoto+'"/></div>';
+	        			askMsg += '<div class="question_text clear"><p>'+ask+'</p><i></i>';
+	        			askMsg += '</div></div>';
+	        			var ansMsg  = '<div class="answer"><div class="heard_img left"><img src="images/moeQuest.jpg"/></div>';
+		            	ansMsg += '<div class="answer_text"><p>'+ans+'</p><i></i>';
+		        		ansMsg += '</div></div>';
+		        		$('.speak_box').append(askMsg);
+		        		$('.speak_box').append(ansMsg);
+		        		
+		        	}
+		        	for_bottom();
+		        });
+		    }
+		});
+		
+	}
+	
+	function to_write(){
+	    $('.wenwen_btn img').attr('src','images/yy_btn.png');
+	    $('.wenwen_btn').attr('onclick','to_say()');
+	    $('.write_box,.wenwen_help button').show();
+	    $('.circle-button,.wenwen_help a').hide();
+	    $('.write_box input').focus();
+	    for_bottom();
+	}
+
+	function to_say(){
+	    $('.wenwen_btn img').attr('src','images/jp_btn.png');
+	    $('.wenwen_btn').attr('onclick','to_write()');
+	    $('.write_box,.wenwen_help button').hide();
+	    $('.circle-button,.wenwen_help a').show();
+	}
+	
+	var APIKEY = "3b3159c6470243c2a87e45a0ebe40cfb";
+	
+	function up_say(){
+	    var text = $('.write_box input').val(),
+	        str  = '<div class="question">';
+	        str += '<div class="heard_img right"><img src="'+headPhoto+'"/></div>';
+	        str += '<div class="question_text clear"><p>'+text+'</p><i></i>';
+	        str += '</div></div>';
+
+	    if(text == ''){
+	        dirAlert('请输入文字！');
+	        $('.write_box input').focus();
+	    }else{
+	        $('.speak_box').append(str);
+	        $('.write_box input').val('');
+	        $('.write_box input').focus();
+	        autoWidth();
+	        for_bottom();
+	     
+	       ajaxGetAnswer(text);     
+	    }
+	}
+	function ajaxGetAnswer(text){
+	  		$.ajax({
+	            url:"http://www.tuling123.com/openapi/api",
+	            type:"post",
+	            data:{"key":APIKEY,"info":text},
+	            dataType:"json",
+	            success:function(result){
+	            	var msg = result.text;
+	            	if(result.url){
+	            		msg = msg+"<a href='"+result.url+"'>点击查看详细信息</a>";
+	            	}
+					var ans  = '<div class="answer"><div class="heard_img left"><img src="images/moeQuest.jpg"/></div>';
+		            	ans += '<div class="answer_text"><p>'+msg+'</p><i></i>';
+		        		ans += '</div></div>';
+		        	$('.speak_box').append(ans);
+					for_bottom();
+					
+					//插入聊天记录
+					model.insert({
+					    class: "chatting_records",
+					    value: {
+					    	userId:id,
+					    	ask:text,
+					    	answer:msg
+					    }
+					}, function(ret, err){
+					});
+	            },error:function(){
+	            	
+	            }
+	 		});
+	}
+	
+	var wen  = document.getElementById('wenwen');
+	
+	function _touch_start(event){
+		event.preventDefault();
+        $('.wenwen_text').css('background','#c1c1c1');
+        $('.wenwen_text span').css('color','#fff');
+        $('.saying').show();
+        
+		var num = 0;
+		
+		speechRecognizer.record({
+		    vadbos: 5000,
+		    vadeos: 5000,
+		    rate: 16000,
+		    asrptt: 0
+		}, function(ret, err) {
+		    speechRecognizer.stopRecord();
+			if(num!=0){
+				return;
+			}
+			num++;
+		    if (ret.status) {
+		       var str  = '<div class="question">';
+			       str += '<div class="heard_img right"><img src="'+headPhoto+'"/></div>';
+			       str += '<div class="question_text clear"><p>'+ret.wordStr+'</p><i></i>';
+			       str += '</div></div>';
+			   $('.speak_box').append(str);
+		       ajaxGetAnswer(ret.wordStr);
+		       
+		       for_bottom();
+		    } else {
+	//	        api.alert({ msg: err.msg });
+		    }
+		});
+        
+    }
+
+    function _touch_end(event){
+        event.preventDefault();
+        $('.wenwen_text').css('background','#fff');
+        $('.wenwen_text .circle-button').css('color','#666');    
+        $('.saying').hide();
+		for_bottom();
+    }
+
+    wen.addEventListener("touchstart", _touch_start, false);
+    wen.addEventListener("touchend", _touch_end, false);
+    
+    //敞口跟随聊天记录滚动
+    function for_bottom(){
+		var speak_height = $('.speak_box').height();
+		$('.speak_box,.speak_window').animate({scrollTop:speak_height},500);
+	}
+	
+	function autoWidth(){
+		$('.question_text').css('max-width',$('.question').width()-60);
+	}
+	autoWidth();
+	
+	 function dirAlert(msg){
+    	layer.msg(msg);
+    }
+</script>
+</body>
+</html>

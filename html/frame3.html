@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<title>个人中心</title>
+	<link rel="stylesheet" type="text/css" href="./user/index/css/ui.css">
+	<link href="favicon.ico" type="image/x-icon" rel="icon">
+	<link href="iTunesArtwork@2x.png" sizes="114x114" rel="apple-touch-icon-precomposed">
+</head>
+<body>
+	<div class="aui-container">
+		<div class="aui-page">
+			<div class="aui-page-my">
+				<div class="aui-my-info">
+					<div class="aui-my-info-back"></div>
+					<a href="javascript:;" class="">
+						<img id="headPhoto" src="../image/user/headPhoto.png" class="aui-my-avatar">
+					</a>
+					<div class="aui-mt-location aui-l-red" style="display:none;"></div>
+				</div>
+				<div class="aui-l-content">
+					<div class="aui-menu-list aui-menu-list-clear">
+						<ul>
+							<li id="login" class="b-line" style="display:none;">
+								<a >
+									<div class="aui-icon" ><img src="./user/index/images/icon-home/login.png"></div>
+									<h3>登录</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li id="logout" class="b-line" style="display:none;">
+								<a >
+									<div class="aui-icon" ><img src="./user/index/images/icon-home/logout.png"></div>
+									<h3>登出</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li id="robot" class="b-line" style="display:none;">
+								<a >
+									<div class="aui-icon"><img src="./user/index/images/icon-home/robot.png"></div>
+									<h3>机器人</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-read.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in2.png"></div>
+									<h3>我的首页</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-secure.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in3.png"></div>
+									<h3>安全中心</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-up.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in4.png"></div>
+									<h3>设置</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-up.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in5.png"></div>
+									<h3>阅读</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-up.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in6.png"></div>
+									<h3>服务区域</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+							<li class="b-line" style="display:none;">
+								<a href="my-up.html">
+									<div class="aui-icon"><img src="./user/index/images/icon-home/my-in8.png"></div>
+									<h3>推荐给好友</h3>
+									<div class="aui-time"><i class="aui-jump"></i></div>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="../script/api.js"></script>
+<script type="text/javascript" src="../tools/APICloudrestSHA1.js"></script>
+<script type="text/javascript" src="../script/tools/jquery321min.js"></script>
+<script type="text/javascript" src="../script/layer/layer.js"></script>
+<script type="text/javascript" src="../script/tools/cloud.js"></script>
+<script type="text/javascript">
+	
+	apiready = function(){
+		cloud.hintWifiStatus();
+		
+		
+		var headPhoto = document.getElementById("headPhoto");	//头像 
+		var logout = document.getElementById("logout");		//登出
+		var login = document.getElementById("login");		//登入
+		var robot = document.getElementById("robot");		//机器人
+		
+		var client = new Resource(api.appId, "C58F4A5B-7EFE-A57C-18BA-CB749DFF8190");
+		var model = cloud.getModel();
+		var query = api.require("query");
+		var user = api.require("user");
+		var headPhotoUuid;
+		
+		var id;
+		setInterval(function(){
+		
+			id = localStorage.getItem("communityId");
+			
+			if(!id){	//如果用户没有登陆
+				headPhoto.src = "../image/user/headPhoto.png";
+				logout.style.display = "none";
+				login.style.display = "";
+				robot.style.display = "none";
+			}else{
+				findUserAttribute(id);
+				logout.style.display = "";
+				login.style.display = "none";
+				robot.style.display = "";
+			}
+			
+		},1000);
+		
+		
+		/**
+		 *	查询当前角色属性 
+		 */
+		function findUserAttribute(userId){	
+	        model.findById({
+				    class: "user",
+				    id: userId
+				}, function(ret, err){
+					headPhotoUuid = ret.headPhoto;
+					name.innerHTML = ret.name;
+					if(headPhotoUuid){
+						findPhoto(headPhotoUuid);
+					}else{
+						headPhoto.src = "../image/user/headPhoto.png";
+					}
+				});
+		}
+		/**
+		 *	根据文件id查找文件的url 
+		 */
+		function findPhoto(fileId){
+			model.findById({
+			    class: "file",
+			    id: fileId
+			}, function(ret, err){
+				var url = ret.url;
+				if(url){
+					headPhoto.src = url;
+				}else{
+					headPhoto.src = "../image/user/headPhoto.png";
+				}
+			});
+		
+		}
+		/**
+		 *	当登出按钮被点击的时候 
+		 */
+		logout.onclick = function(){
+			localStorage.removeItem("communityId"); 
+			dirAlert("登出成功");
+		}
+		/**
+		 *	当登录按钮被点击的时候 
+		 */
+		login.onclick = function(){
+			api.openWin({
+	            name: '登录',
+	            url: './user/signup/index.html',
+	            allowEdit:true
+	        });
+		}
+		/**
+		 *	当机器人按钮被点击的时候 
+		 */
+		robot.onclick = function(){
+			api.openWin({
+	            name: '在线聊天',
+	            url: './user/robot/index.html',
+	            allowEdit:true
+	        });
+		}
+		/**
+		 *	当头像被点击的时候 
+		 */
+		headPhoto.onclick = function(){	
+			if(!id){
+				dirAlert("请先登录再更改头像");
+				return;
+			}
+			//打开相册
+			api.getPicture({
+                sourceType: 'library',
+                encodingType: 'jpg',
+                mediaValue: 'pic',
+                destinationType: 'url',
+                allowEdit: true,
+                quality: 100,
+                targetWidth: 300,
+                targetHeight: 100,
+                saveToPhotoAlbum: false
+            }, function(ret, err) {
+                if (ret && ret.data) {
+                	uploadFile(ret);
+                }
+            });
+		}
+		
+		/**
+		 *	上传文件 
+		 */
+		function uploadFile(para){
+			model.uploadFile({
+			    report: false,
+			    data: {
+			        file: {
+			            name: new Date().getTime()+".jpg",
+			            url: para.data
+			        }
+			    }
+			}, function(ret, err){
+			    if( ret ){
+			    	deleteFileById(headPhotoUuid);
+			    	//更改对应的头像id
+			        model.updateById({
+					    class: "user",
+					    id: id,
+					    value: {headPhoto:ret.id}
+					}, function(success, err){
+						headPhoto.src = ret.url;
+						//当前头像的id备份到全局变量里
+						headPhotoUuid = ret.id;
+					});
+				}
+			});
+		}
+		
+		/**
+		 *	删除用户对应的头像 
+		 */
+		function deleteFileById(fileId){
+			if(fileId){
+				model.deleteById({
+				    class: "file",
+				    id: fileId
+				}, function(ret, err){
+					
+				});
+			}
+			
+		}
+		
+		
+		function dirAlert(msg){
+    		layer.msg(msg);
+    	}
+	}	
+	
+</script>
+</html>

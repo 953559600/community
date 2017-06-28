@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>社区</title>
+    <link rel="stylesheet" type="text/css" href="../css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="../frame/bootstrap337dist/css/bootstrap.css"/>
+    <style type="text/css">
+    	*{
+    		margin:0px;
+    		padding:0px;
+    	}
+    	.container {
+            width:100%; 
+            padding-bottom:20px;
+            overflow:scroll;
+        }
+        .title{
+        	width:100%; 
+        	height:50%;
+        	font-weight:bold;
+        	font-size:16px;
+        	color:#666;
+        }
+        .info{	
+        	margin-top:2%;
+        }
+        .info .name{	/* 用户名*/
+        	color:#666;
+        }
+        .info .count{	/* 回复数量*/
+        	margin-left:5%;
+        	font-size:12px;
+        	color:#999;
+        }
+        .info .date{	/* 创建时间*/
+       	 	margin-left:5%;
+       	 	font-size:10px;
+       	 	color:#aaa;
+        }
+        .themeDom{
+        	margin-top:2%;
+        	width:100%; 
+        	height:15%;
+        	padding:3%;
+			background: -webkit-linear-gradient('#aaa', '#eee'); /* Safari 5.1 - 6.0 */
+            background: -o-linear-gradient('#aaa', '#eee'); /* Opera 11.1 - 12.0 */
+            background: -moz-linear-gradient('#aaa', '#eee'); /* Firefox 3.6 - 15 */
+            background: linear-gradient('#aaa', '#eee'); /* 标准的语法 */
+        	
+		  	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        }
+        .themeDom:active{
+        	background:#eee;
+        }
+        .top{
+        	float:right;
+        	font-size:12px;
+        	border: 1px solid #999;
+        	color:#666;
+        }
+        .themeDelete{
+			float:right;
+			border: 1px solid #666;
+			color:#999;
+			position:relative;
+			top:-25px;
+		}
+		.themeDelete:active{
+			color:#333;
+		}
+		.select{
+			
+		}
+    </style>
+    <script type="text/javascript" src="../script/tools/jquery321min.js"></script>
+	<script type="text/javascript" src="../script/layer/layer.js"></script>
+	<script type="text/javascript" src="../script/tools/cloud.js"></script>
+    <script type="text/javascript">
+    	var winW = document.documentElement.clientWidth || document.body.clientWidth;  
+		var winH =  document.documentElement.clientHeight || document.body.clientHeight;  
+			
+    	var id;
+    	var list;
+    	var num = 1;
+    	var boo = true;
+    	var type;
+    	apiready = function(){
+    		id = localStorage.getItem("communityId");
+    		if(id){
+				cloud.getUserById(id, getUserType);
+			}
+    		list = document.getElementById("list");
+    		
+    		setInterval(function(){
+    			id = localStorage.getItem("communityId");
+    			if(id){
+    				cloud.getUserById(id, getUserType);
+    			}
+    		}, 1000);
+    		
+    		
+    		cloud.findByColumnPage("theme",["status",9],1, 10, initListStatus9);
+    		
+    		
+    		pullDown();
+    		pullUp();
+    		cloud.hintWifiStatus();
+    	}
+    	function getUserType(ret){
+    		type = ret.type;
+    	}
+    	//上拉加载更多
+    	function pullUp(){
+    		api.addEventListener({
+			    name:'scrolltobottom',
+			    extra:{
+     			   threshold:-20            //设置距离底部多少距离时触发，默认值为0，数字类型
+   				}
+			},function(ret,err){
+				var winW = document.documentElement.clientWidth || document.body.clientWidth;  
+				if(!boo){
+	        		layer.msg('已经到底了', {
+					  offset: 'b',
+					  area: winW+'px'
+					});
+					return;
+				}
+				layer.msg('正在加载更多', {
+					  offset: 'b',
+					  area: winW+'px'
+				});
+				num++;
+				cloud.findByColumnPage("theme",["status",1], num, 10, initListStatus1);
+			});
+    	}
+    	
+    	//下拉刷新
+    	function pullDown(){
+    		
+    		api.setCustomRefreshHeaderInfo({
+			    bgColor: '#C0C0C0',
+			    isScale: true,
+			    image: {
+			        pull: [
+			            'widget://image/refresh/dropdown0.png',
+			            'widget://image/refresh/dropdown1.png',
+			            'widget://image/refresh/dropdown2.png',
+			            'widget://image/refresh/dropdown3.png',
+			            'widget://image/refresh/dropdown4.png',
+			            'widget://image/refresh/dropdown5.png',
+			            'widget://image/refresh/dropdown6.png'
+			        ],
+			        load: [
+			            'widget://image/refresh/loading0.png',
+			            'widget://image/refresh/loading1.png',
+			            'widget://image/refresh/loading2.png',
+			            'widget://image/refresh/loading3.png',
+			            'widget://image/refresh/loading4.png'
+			        ]
+			    }
+			}, function() {
+				  num = 1;
+				  boo = true;
+				  list.innerHTML="";
+				  cloud.findByColumnPage("theme",["status",9],1, 10, initListStatus9);
+			});
+    	}
+    	
+    	//初始化列表
+    	function initList(ret){
+    		
+			for(var i=0; i<ret.length; i++){
+				var theme = ret[i];
+				var title = theme.title;
+				var userId = theme.userId;
+				var themeId = theme.id;
+				var status = theme.status;
+				var createdAt = theme.createdAt;
+				createdAt = new Date(createdAt);
+				createdAt = cloud.DateFormat(createdAt, "yyyy-MM-dd hh:mm:ss");
+				
+				(function(title, userId, themeId, createdAt){
+					cloud.getUserById(userId, addTheme);
+					
+					var titleDom = document.createElement("span");
+			    	var infoDom = document.createElement("div");
+					var themeDom = document.createElement("div");
+					list.appendChild(themeDom);
+					
+					themeDom.onclick = function(){
+						api.openWin({
+				            name: '讨论',
+				            url: './headline/discuss.html',
+				            allowEdit:true,
+				            pageParam: {
+                            	themeId: themeId
+                        	}
+				        });
+					}
+					
+					//先查用户的名字
+					function addTheme(ret){
+						cloud.findByColumn("discuss", ["themeId",themeId], getDiscuss);
+			    		var username = ret.name;
+			    		infoDom.innerHTML = username;
+			    	}	
+			    	
+			    	//再查回复的数量
+			    	function getDiscuss(ret){
+			    		var count = ret.count; 
+			    		
+			    		var nameDom = document.createElement("span");
+			    		var selectDom = document.createElement("select");
+			    		var option1 = document.createElement("option");
+			    		var option9 = document.createElement("option");
+			    		var themeDeleteDom = document.createElement("span");
+			    		var countDom = document.createElement("span");
+			    		var dateDom = document.createElement("span");
+			    		var topDom = document.createElement("span");
+			    		
+			    		selectDom.appendChild(option1);
+			    		option1.setAttribute("value", "1");
+			    		option1.innerHTML = "普通";
+			    		selectDom.appendChild(option9);
+			    		option9.setAttribute("value", "9");
+			    		option9.innerHTML = "置顶";
+			    		
+			    		nameDom.setAttribute("class", "name");
+			    		selectDom.setAttribute("class", "select");
+			    		themeDeleteDom.setAttribute("class", "themeDelete");
+			    		countDom.setAttribute("class", "count");
+			    		dateDom.setAttribute("class", "date");
+			    		topDom.setAttribute("class", "top");
+			    		
+			    		nameDom.innerHTML = infoDom.innerHTML;
+			    		themeDeleteDom.innerHTML = "删除";
+			    		countDom.innerHTML = count+"回复";
+			    		dateDom.innerHTML = createdAt;
+			    		topDom.innerHTML = "置顶";
+			    		
+			    		infoDom.innerHTML = "";
+			    		infoDom.appendChild(nameDom);
+			    		if(type==9){	//超级管理员
+			    			infoDom.appendChild(themeDeleteDom);
+			    			infoDom.appendChild(selectDom);
+			    			themeDeleteDom.ondblclick = function(){
+			    				//阻止事件冒泡
+								window.event? window.event.cancelBubble = true : e.stopPropagation();
+								var model = cloud.getModel();
+			    				model.deleteById({
+								    class: "theme",
+								    id: themeId
+								}, function(ret, err){
+								    if(ret){
+								    	cloud.dirAlert("删除成功");
+								    	num = 1;
+										boo = true;
+										list.innerHTML="";
+										cloud.findByColumnPage("theme",["status",9],1, 10, initListStatus9);
+								    }
+								});
+			    			}
+			    			themeDeleteDom.onclick = function(){
+			    				//阻止事件冒泡
+								window.event? window.event.cancelBubble = true : e.stopPropagation();
+			    			}
+			    			selectDom.onclick = function(){
+			    				//阻止事件冒泡
+								window.event? window.event.cancelBubble = true : e.stopPropagation();
+			    			}
+			    			selectDom.onchange = function(){
+								var index = selectDom.selectedIndex; // 选中索引
+								var value = selectDom.options[index].value; // 选中值
+								var model = cloud.getModel();
+								model.updateById({
+								    class: "theme",
+								    id: themeId,
+								    value: {"status":value}
+								}, function(ret, err){
+								   		cloud.dirAlert("修改成功");
+								    	num = 1;
+										boo = true;
+										list.innerHTML="";
+										cloud.findByColumnPage("theme",["status",9],1, 10, initListStatus9);
+								});
+			    			}
+			    		}
+			    		infoDom.appendChild(countDom);
+			    		infoDom.appendChild(dateDom);
+			    		if(status==9){
+			    			infoDom.appendChild(topDom);
+			    			option9.setAttribute("selected", "selected");
+			    		}
+			    		
+						
+						titleDom.setAttribute("class", "title");
+						infoDom.setAttribute("class", "info");
+						themeDom.setAttribute("class", "themeDom");
+						
+						titleDom.innerHTML = title;
+						
+						themeDom.appendChild(titleDom);
+						themeDom.appendChild(infoDom);
+						
+			    	}
+			    	
+			    	
+				})(title, userId, themeId, createdAt);
+				
+			}    
+			
+			api.refreshHeaderLoadDone();
+    	}
+    	
+    	function initListStatus9(ret){
+    		initList(ret);
+    		cloud.findByColumnPage("theme",["status",1],1, 10, initListStatus1);
+    	}
+    	function initListStatus1(ret){
+    		if(ret.length<10){
+    			boo = false;
+    		}
+    		initList(ret);
+    	}
+    	//我有话说
+    	function speak(){
+    		if(!id){
+    			cloud.dirAlert("请先登录再进行操作");
+    			return;
+    		}
+    		api.openWin({
+	            name: '我有话说',
+	            url: './headline/addTheme.html',
+	            allowEdit:true
+	        });
+    	}
+    </script>
+</head>
+<body id="body">
+	<div id="list" class="container">
+		
+	</div>
+</body>
+</html>

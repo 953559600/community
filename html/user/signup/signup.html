@@ -1,0 +1,139 @@
+<!--
+Author: W3layouts
+Author URL: http://www.htmlsucai.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<title>注册</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="Internship Sign In & Sign Up Form Responsive Widget,Login form widgets, Sign up Web forms , Login signup Responsive web form,Flat Pricing table,Flat Drop downs,Registration Forms,News letter Forms,Elements" />
+<script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+<!-- Custom Theme files -->
+<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css" media="all">
+<link href="css/snow.css" rel="stylesheet" type="text/css" media="all" />
+<link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
+<!-- //Custom Theme files -->
+<!-- web font -->
+<!--<link href="http://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
+<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet">
+-->
+<!-- //web font -->
+<script type="text/javascript" src="../../../script/api.js"></script>
+<script type="text/javascript" src="../../../script/tools/jquery321min.js"></script>
+<script type="text/javascript" src="../../../script/layer/layer.js"></script>
+<script type="text/javascript" src="../../../script/tools/cloud.js"></script>
+<script type="text/javascript">
+		var winW = document.documentElement.clientWidth || document.body.clientWidth; 
+		var model;
+		
+		apiready = function(){
+			cloud.hintWifiStatus();
+			
+			model = cloud.getModel();
+			
+		};
+		
+		
+		function submit(){
+			var username = document.getElementById("username");
+			var password = document.getElementById("password");
+			var password2 = document.getElementById("password2");
+			var name = document.getElementById("name");
+			if(!username.value){
+				username.placeholder = "邮箱不能为空";
+				dirAlert("邮箱不能为空");
+				return;
+			}
+			var re = /^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/;
+			if(!username.value.match(re)){
+				username.placeholder = "邮箱格式不正确";
+				dirAlert("邮箱格式不正确");
+				return;
+			}
+			
+			if(!password.value){
+				password.placeholder = "密码不能为空";
+				dirAlert("密码不能为空");
+				return;
+			}
+			if(password.value != password2.value){
+				password2.placeholder = "两次输入的密码不一样";
+				dirAlert("两次输入的密码不一样");
+				return;
+			}
+			
+			if(!name.value){
+				name.placeholder = "昵称不能为空";
+				dirAlert("昵称不能为空");
+				return;
+			}
+			var nameRe = /^[\u4e00-\u9fa5]{2,4}$/;
+			if(!name.value.match(nameRe)){
+				name.placeholder = "昵称格式不正确";
+				dirAlert("昵称格式不正确");
+				return;
+			}
+			model.insert({
+			    class: "user",
+			    value: {
+			    	username:username.value,
+			    	password:password.value,
+			    	email:username.value,
+			    	name:name.value
+			    }
+			}, function(ret, err){
+				if(ret.error){
+					username.placeholder = "邮箱已被注册";
+					dirAlert("邮箱已被注册");
+					username.value = "";
+					password.value = "";
+					return;
+				}
+				dirAlert("注册成功 快去邮箱查看认证邮件吧");
+				setTimeout(function(){
+				 	api.closeWin();
+				},3000);
+				
+			});
+			
+		}
+		function dirAlert(msg){
+    		layer.msg(msg);
+    	}
+</script>
+</head>
+<body>
+<div class="snow-container">
+			  <div class="snow foreground"></div>
+			  <div class="snow foreground layered"></div>
+			  <div class="snow middleground"></div>
+			  <div class="snow middleground layered"></div>
+			  <div class="snow background"></div>
+			  <div class="snow background layered"></div>
+			</div>
+
+<div class="top-buttons-agileinfo">
+<!--<a href="index.html">登录</a><a href="signup.html" class="active">注册</a>-->
+</div>
+<h1>用户注册</h1>
+<div class="main-agileits">
+<!--form-stars-here-->
+		<div class="form-w3-agile">
+			<h2 class="sub-agileits-w3layouts">注册</h2>
+					<input id="username" type="text" name="Username" placeholder="请输入登录邮箱" required="" />
+					<input id="password" type="password" name="Password" placeholder="请输入密码" required="" />
+					<input id="password2" type="password" name="Password" placeholder="请再输一次密码" required="" />
+					<input id="name" type="text" name="name" placeholder="请输入昵称" required="" >
+				<div class="submit-w3l">
+					<input type="submit" onclick= "submit();" value="点击注册">
+				</div>
+		</div>
+		</div>
+<!--//form-ends-here-->
+<!-- copyright -->
+	<div class="copyright w3-agile">
+		<p> 
